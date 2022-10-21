@@ -1,0 +1,24 @@
+{
+  "name": "mpv-javascript-http",
+  "version": "0.0.1",
+  "description": "Http client for mpv scripts (based on curl)",
+  "main": "HttpClient.js",
+  "types": "HttpRequest.d.ts",
+  "homepage": "https://github.com/Hill-98/mpv-javascript-http",
+  "repository": "github:Hill-98/mpv-javascript-http",
+  "bugs": {
+    "url": "https://github.com/Hill-98/mpv-javascript-http/issues"
+  },
+  "author": "Zhong Lufan",
+  "license": "GPL-3.0",
+  "scripts": {
+    "test": "node tests/test.js"
+  },
+  "devDependencies": {
+    "@types/mpv-script": "latest",
+    "@types/node": "latest",
+    "cookie-parser": "^1.4.6",
+    "express": "^4.18.2",
+    "express-form-data": "^2.0.19"
+  }
+}

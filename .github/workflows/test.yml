@@ -1,0 +1,51 @@
+name: Test
+on:
+  push:
+  pull_request:
+    paths:
+      - '**.js'
+
+jobs:
+  test-on-linux:
+    runs-on: ubuntu-latest
+    container:
+      image: archlinux:latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Update packages
+        run: yes | pacman -S --noconfirm --refresh --sysupgrade
+      - name: Install packages
+        run: yes | pacman -S --noconfirm curl mpv nodejs npm
+      - name: Install npm packages
+        run: npm install
+      - name: Run test
+        run: npm run test
+  test-on-macos:
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Install packages
+        run: brew install mpv node
+      - name: Install npm packages
+        run: npm install
+      - name: Run test
+        run: npm run test
+  test-on-windows:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v3
+      - name: Add scoop path to PATH environment variable
+        uses: myci-actions/export-env-var-powershell@1
+        with:
+          name: PATH
+          value: C:\scoop\shims;$env:PATH
+      - name: Install scoop
+        run: iex "& {$(irm get.scoop.sh)} -RunAsAdmin -ScoopDir C:\scoop"
+      - name: Install packages
+        run: |
+            scoop bucket add extras
+            scoop install mpv nodejs
+      - name: Install npm packages
+        run: npm install
+      - name: Run test
+        run: npm run test
