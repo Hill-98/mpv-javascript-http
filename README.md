@@ -2,7 +2,7 @@
 
 Http client for mpv scripts (based on curl).
 
-_Windows 10/11 already has `curl.exe` built in, so it's almost all platform compatible._
+_Windows 10/11 already comes with `curl.exe` pre-installed, so it works on almost all platforms out of the box._
 
 ## Example
 

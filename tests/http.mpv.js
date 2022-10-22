@@ -11,20 +11,26 @@ if (HttpClient.available) {
     msg.info(messages.available);
 }
 
-var expected_response = function expected_response(expected, response) {
+var expected_object = function expected_response(expected, object) {
     var keys = Object.keys(expected);
     for (var i = 0; i < keys.length; i++) {
         var key = keys[i];
         var v1 = expected[key];
-        var v2 = response[key];
+        var v2 = object[key];
+        if (typeof v1 !== typeof v2) {
+            return false;
+        }
+        if (typeof v1 === 'object' && !Array.isArray(v1) && expected_object(v1, v2)) {
+            break;
+        }
         if (JSON.stringify(v1) !== JSON.stringify(v2)) {
             return false;
         }
     }
     return true;
-}
+};
 
-function http_test(cb) {
+var http_test = function http_test(cb) {
     var request = requests.shift();
     if (!request) {
         cb();
@@ -38,11 +44,12 @@ function http_test(cb) {
             failed = true;
             msg.error(err);
         } else {
-            msg.verbose('data: ' + JSON.stringify(response.data));
+            msg.verbose('data: ' + (typeof response.data === 'object' ? JSON.stringify(response.data) : response.data));
             msg.verbose('headers: ' + JSON.stringify(response.headers));
-            msg.verbose('raw_data: ' + JSON.stringify(response.raw_data));
+            msg.verbose('raw_data: ' + response.raw_data);
             msg.verbose('status code: ' + response.status_code);
-            if (!expected_response(request.response, response)) {
+            msg.verbose('status text: ' + response.status_text);
+            if (!expected_object(request.response, response)) {
                 failed = true;
             }
         }
@@ -52,7 +59,7 @@ function http_test(cb) {
         http_test(cb);
     };
     http.request(request.method, request.url, request.options, http_callback);
-}
+};
 
 mp.register_script_message('http/test', function() {
     msg.info(messages.test_start);

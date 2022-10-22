@@ -1,6 +1,6 @@
 // noinspection HttpUrlsUsage
 
-var requests = [
+module.exports = [
     {
         method: 'GET',
         url: 'http://127.0.0.1:18066/hello',
@@ -22,6 +22,28 @@ var requests = [
         response: {
             data: 'hello first last! (cookies)',
             status_code: 200,
+        },
+    },
+    {
+        method: 'GET',
+        url: 'http://127.0.0.1:18066/hello-headers',
+        options: {},
+        response: {
+            data: 'hello headers!',
+            headers: {
+                first_name: ['first'],
+                last_name: ['last'],
+            },
+            status_code: 200,
+        },
+    },
+    {
+        method: 'GET',
+        url: 'http://127.0.0.1:18066/hello-redirect',
+        options: {},
+        response: {
+            data: '',
+            status_code: 204,
         },
     },
     {
@@ -99,5 +121,3 @@ var requests = [
         },
     },
 ];
-
-module.exports = requests;

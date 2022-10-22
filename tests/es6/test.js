@@ -4,7 +4,7 @@ const assert = require('assert');
 const child_process = require('child_process');
 const cookieParser = require('cookie-parser');
 const express = require('express');
-const formData = require("express-form-data");
+const formData = require('express-form-data');
 const net = require('net');
 const messages = require('../messages');
 const server = express();
@@ -15,6 +15,30 @@ server.get('/hello', (req, res) => {
 });
 server.get('/hello-cookies', (req, res) => {
     res.send(`hello ${req.cookies.first_name} ${req.cookies.last_name}! (cookies)`);
+});
+server.get('/hello-headers', (req, res) => {
+    res.header('first_name', 'first');
+    res.header('last_name', 'last');
+    res.send(`hello headers!`);
+});
+server.get('/hello-redirect', (req, res) => {
+    res.status(302);
+    res.location('/hello-redirect-1');
+    res.send('Go to ' + res.get('location'));
+});
+server.get('/hello-redirect-1', (req, res) => {
+    res.status(302);
+    res.location('/hello-redirect-2');
+    res.send('Go to ' + res.get('location'));
+});
+server.get('/hello-redirect-2', (req, res) => {
+    res.status(302);
+    res.location('/hello-redirect-3');
+    res.send('Go to ' + res.get('location'));
+});
+server.get('/hello-redirect-3', (req, res) => {
+    res.status(204);
+    res.send();
 });
 server.post('/hello-data', express.urlencoded(), (req, res) => {
     res.send(`hello ${req.body.first_name} ${req.body.last_name}! (data)`);

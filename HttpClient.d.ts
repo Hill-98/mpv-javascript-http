@@ -41,6 +41,7 @@ interface Response {
     headers: { [key: string]: string[] };
     raw_data: string;
     status_code: number;
+    status_text: string;
 }
 
 type RequestCallback = (error: Error | null, response: Response) => void;
@@ -80,6 +81,5 @@ declare class HttpClient {
 
     request(method: string, url: string, options?: RequestOptions, callback?: RequestCallback): Request;
 }
-
 
 export = HttpClient;

@@ -106,13 +106,11 @@ var curl_exec = function curl_exec(opts, cb) {
     var command_opts = [
         '--anyauth', // Auto-detect auth method
         '--disable', // Disable curlrc config file
+        '--include', // Include headers in output
         '--location', // Follow redirect
         '--no-progress-meter', // Disable progress bar display
-        '--proto',
-        '=http,https', // Allowed protocols
+        '--proto', '=http,https', // Allowed protocols
         '--proxy-anyauth', // Auto-detect auth method for proxy
-        '--write-out',
-        '"""%{header_json}"""%{http_code}', // show meta-info
     ];
     var args = [CURL].concat(command_opts, opts);
     msg.verbose(args.join(' '));
@@ -230,11 +228,52 @@ var options_to_curl_opts = function options_to_curl_opts(options) {
 };
 
 /**
+ * @typedef {Object} HeaderResult
+ * @property {Object.<string, string[]>} headers
+ * @property {number} status_code
+ * @property {string} status_text
+ */
+
+/**
+ * @param {string} head
+ * @returns {HeaderResult|undefined}
+ */
+var parse_http_head = function parse_http_head(head) {
+    if (head.substring(0, 4).toUpperCase() !== 'HTTP') {
+        return undefined;
+    }
+    var lines = head.split('\n').map(function(v) { return v.replace('\r', ''); });
+    var firstLine = lines.shift();
+    var status = firstLine.substring(firstLine.indexOf(' ') + 1);
+    var status_code = parseInt(status.substring(0, 3)) || 0;
+    var status_text = status.substring(4);
+    var headers = Object.create(null);
+    lines.forEach(function(line) {
+        var pos = line.indexOf(':');
+        if (pos === -1) {
+            return;
+        }
+        var name = line.substring(0, pos).toLowerCase();
+        var value = line.substring(pos + 1).replace(/^\s+/, '');
+        if (!Object.prototype.hasOwnProperty.call(headers, name)) {
+            headers[name] = [];
+        }
+        headers[name].push(value);
+    });
+    return {
+        headers: headers,
+        status_code: status_code,
+        status_text: status_text,
+    };
+};
+
+/**
  * @typedef {Object} Response
  * @property {string|Object} data
  * @property {Object.<string, string[]>} headers
  * @property {string} raw_data
  * @property {number} status_code
+ * @property {string} status_text
  */
 
 /**
@@ -242,29 +281,48 @@ var options_to_curl_opts = function options_to_curl_opts(options) {
  * @returns {Response}
  */
 var parse_curl_output = function parse_curl_output(output) {
-    var http_headers_end = output.lastIndexOf('"""');
-    var http_headers_start = output.lastIndexOf('"""', http_headers_end - 3);
-    var http_headers = output.substring(http_headers_start + 3,
-        http_headers_end);
-    var http_code = output.substring(http_headers_end + 3);
-    var raw_data = output.substring(0, http_headers_start);
-
-    var code = parseInt(http_code) || 0;
-    var data = raw_data;
+    var curl_output = output;
+    var body = '';
     var headers = Object.create(null);
+    var status_code = 0;
+    var status_text = '';
 
-    try {
-        headers = JSON.parse(http_headers);
-    } catch (err) {
+    while (true) {
+        var header_end_pos = curl_output.indexOf('\r\n\r\n');
+        if (header_end_pos === -1) {
+            break;
+        }
+        var header_text = curl_output.substring(0, header_end_pos);
+        var http_meta = parse_http_head(header_text);
+        if (http_meta === undefined) {
+            break;
+        } else {
+            body = curl_output.substring(header_end_pos + 4);
+            headers = http_meta.headers;
+            status_code = http_meta.status_code;
+            status_text = http_meta.status_text;
+        }
+        if (status_code < 300 || status_code >= 400) {
+            break;
+        }
+        curl_output = curl_output.substring(header_end_pos + 4);
     }
 
-    if (headers.hasOwnProperty('content-type')) {
+    var result = {
+        data: body,
+        headers: headers,
+        raw_data: body,
+        status_code: status_code,
+        status_text: status_text,
+    };
+
+    if (Object.prototype.hasOwnProperty.call(headers, 'content-type')) {
         var contentType = headers['content-type'];
         for (var i = 0; i < contentType.length; i++) {
             var type = contentType[i];
             if (type.indexOf('application/json') === 0) {
                 try {
-                    data = JSON.parse(raw_data);
+                    result.data = JSON.parse(result.raw_data);
                 } catch (err) {
                 }
                 break;
@@ -272,12 +330,7 @@ var parse_curl_output = function parse_curl_output(output) {
         }
     }
 
-    return {
-        data: data,
-        headers: headers,
-        raw_data: raw_data,
-        status_code: code,
-    };
+    return result;
 };
 
 /**
