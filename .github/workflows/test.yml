@@ -63,9 +63,14 @@ jobs:
           value: C:\scoop\shims;$env:PATH
       - name: Install scoop
         run: iex "& {$(irm get.scoop.sh)} -RunAsAdmin -ScoopDir C:\scoop"
+      - name: Setting scoop
+        run: |
+            scoop config debug $true
+            scoop config aria2-enabled $true
+            scoop bucket add extras
       - name: Install packages
         run: |
-            scoop bucket add extras
+            scoop install aria2
             scoop install mpv
       - name: Show versions
         run: |
