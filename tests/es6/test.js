@@ -6,6 +6,7 @@ const cookieParser = require('cookie-parser');
 const express = require('express');
 const formData = require('express-form-data');
 const net = require('net');
+const which = require('which');
 const messages = require('../messages');
 const server = express();
 
@@ -69,7 +70,8 @@ const mpv_args = [
     '--script=../http.mpv.js',
     '-v',
 ];
-const mpv = child_process.spawn(is_windows ? 'mpv.com' : 'mpv', mpv_args, {
+const mpv_executable = is_windows ? which.sync('mpv.com', { nothrow: true }) || which.sync('mpv.exe') : which.sync('mpv');
+const mpv = child_process.spawn(mpv_executable, mpv_args, {
     cwd: __dirname,
     stdio: 'pipe',
 });

@@ -75,7 +75,7 @@ jobs:
       - name: Show versions
         run: |
             curl.exe --version
-            mpv.com --version
+            mpv.exe --version
             node.exe --version
       - name: Install npm packages
         run: npm install
