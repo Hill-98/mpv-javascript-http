@@ -11,29 +11,51 @@ jobs:
     container:
       image: archlinux:latest
     steps:
-      - uses: actions/checkout@v3
-      - name: Update packages
-        run: yes | pacman -S --noconfirm --refresh --sysupgrade
+      - name: Checkout repo
+        uses: actions/checkout@v3
       - name: Install packages
-        run: yes | pacman -S --noconfirm curl mpv nodejs npm
+        run: pacman --sync --nodeps --needed --noconfirm --refresh --sysupgrade curl mpv nodejs-lts-gallium npm
+      - name: Show versions
+        run: |
+            curl --version
+            mpv --version
+            node --version
       - name: Install npm packages
         run: npm install
       - name: Run test
-        run: npm run test
+        run: npm test
   test-on-macos:
     runs-on: macos-latest
     steps:
-      - uses: actions/checkout@v3
+      - name: Checkout repo
+        uses: actions/checkout@v3
+      - name: Setup NodeJS
+        uses: actions/setup-node@v3
+        with:
+          node-version: lts/gallium
       - name: Install packages
-        run: brew install mpv node
+        run: |
+            brew update
+            brew install mpv
+            brew upgrade
+      - name: Show versions
+        run: |
+            curl --version
+            mpv --version
+            node --version
       - name: Install npm packages
         run: npm install
       - name: Run test
-        run: npm run test
+        run: npm test
   test-on-windows:
     runs-on: windows-latest
     steps:
-      - uses: actions/checkout@v3
+      - name: Checkout repo
+        uses: actions/checkout@v3
+      - name: Setup NodeJS
+        uses: actions/setup-node@v3
+        with:
+          node-version: lts/gallium
       - name: Add scoop path to PATH environment variable
         uses: myci-actions/export-env-var-powershell@1
         with:
@@ -44,8 +66,13 @@ jobs:
       - name: Install packages
         run: |
             scoop bucket add extras
-            scoop install mpv nodejs
+            scoop install mpv
+      - name: Show versions
+        run: |
+            curl.exe --version
+            mpv.com --version
+            node.exe --version
       - name: Install npm packages
         run: npm install
       - name: Run test
-        run: npm run test
+        run: npm test
