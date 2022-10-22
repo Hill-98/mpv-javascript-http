@@ -82,15 +82,18 @@ var OS = detect_os();
  * @returns {string|undefined}
  */
 var detect_curl = function detect_curl() {
-    var process = null;
+    var process;
+    var result = '';
     if (OS === 'windows') {
-        process = subprocess('where.exe', 'curl.exe')
+        process = subprocess('where.exe', 'curl.exe');
+        if (process.status === 0) {
+            result = process.stdout.split('\n')[0].trim();
+        }
     } else {
         process = subprocess('sh', '-c', 'command -p -v curl');
-    }
-    var result = '';
-    if (process.status === 0) {
-        result = process.stdout.trim();
+        if (process.status === 0) {
+            result = process.stdout.trim();
+        }
     }
     return result === '' ? undefined : result;
 };

@@ -58,17 +58,20 @@ server.post('/hello-json', express.json(), (req, res) => {
 
 server.listen(18066);
 
+const is_windows = process.platform === 'win32';
+
+const mpv_ipc_path = is_windows ? '\\\\.\\pipe\\mpv-http-test-sock' : '/tmp/mpv-http-test.sock';
+
 const mpv_args = [
     '--no-config',
     '--idle=yes',
-    '--input-ipc-server=/tmp/mpv.http.test.sock',
+    '--input-ipc-server=' + mpv_ipc_path,
     '--script=../http.mpv.js',
     '-v',
 ];
-const mpv = child_process.spawn('mpv', mpv_args, {
+const mpv = child_process.spawn(is_windows ? 'mpv.com' : 'mpv', mpv_args, {
     cwd: __dirname,
     stdio: 'pipe',
-    shell: true,
 });
 const mpv_sock = new net.Socket();
 const mpv_output = [];
@@ -83,10 +86,12 @@ const output_include = function output_include(message) {
 mpv.stderr.pipe(process.stderr);
 mpv.stdout.pipe(process.stdout);
 mpv.stdout.on('data', (data) => {
-    const output = data.toString().split('\n');
+    const output = data.toString().replaceAll('\r', '').split('\n');
     mpv_output.push(...output);
 });
-
+mpv.on('error', (err) => {
+    console.error(err);
+});
 mpv.on('exit', (code) => {
     console.info('mpv exited: ' + code);
     process.exit(code);
@@ -95,7 +100,7 @@ mpv.on('exit', (code) => {
 mpv.on('spawn', () => {
     setTimeout(() => {
         assert(output_include(messages.available));
-        mpv_sock.connect('/tmp/mpv.http.test.sock', () => {
+        mpv_sock.connect(mpv_ipc_path, () => {
             send_command('script-message http/test');
             setInterval(() => {
                 if (output_include(messages.test_done)) {
@@ -103,10 +108,16 @@ mpv.on('spawn', () => {
                     send_command('quit');
                 }
             }, 500);
-            setTimeout(() => {
-                send_command('quit 99');
-                console.error('mpv http test timeout');
-            }, 30 * 1000);
         });
     }, 1000);
+});
+
+setTimeout(() => {
+    console.error('test timeout');
+    process.exit(99);
+}, 60 * 1000);
+
+process.on('exit', () => {
+    mpv_sock.destroy();
+    mpv.kill();
 });
