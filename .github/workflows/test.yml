@@ -60,7 +60,7 @@ jobs:
         uses: myci-actions/export-env-var-powershell@1
         with:
           name: PATH
-          value: C:\scoop\shims;$env:PATH
+          value: C:\scoop\shims;C:\scoop\apps\mpv\current;$env:PATH
       - name: Install scoop
         run: iex "& {$(irm get.scoop.sh)} -RunAsAdmin -ScoopDir C:\scoop"
       - name: Setting scoop
