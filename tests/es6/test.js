@@ -10,6 +10,12 @@ const which = require('which');
 const messages = require('../messages');
 const server = express();
 
+const TEST_AVAILABILITY_TIMEOUT = parseInt(process.env.TEST_AVAILABILITY_TIMEOUT ?? 3);
+const TEST_DONE_TIMEOUT = parseInt(process.env.TEST_DONE_TIMEOUT ?? 60);
+
+console.log('TEST_AVAILABILITY_TIMEOUT=' + TEST_AVAILABILITY_TIMEOUT);
+console.log('TEST_DONE_TIMEOUT=' + TEST_DONE_TIMEOUT);
+
 server.use(cookieParser());
 server.get('/hello', (req, res) => {
     res.send('hello world!');
@@ -111,13 +117,13 @@ mpv.on('spawn', () => {
                 }
             }, 500);
         });
-    }, 1000);
+    }, TEST_AVAILABILITY_TIMEOUT * 1000);
 });
 
 setTimeout(() => {
     console.error('test timeout');
     process.exit(99);
-}, 60 * 1000);
+}, TEST_DONE_TIMEOUT * 1000);
 
 process.on('exit', () => {
     mpv_sock.destroy();

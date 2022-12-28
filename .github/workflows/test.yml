@@ -1,9 +1,14 @@
 name: Test
+
 on:
   push:
   pull_request:
     paths:
       - '**.js'
+
+env:
+  TEST_AVAILABILITY_TIMEOUT: 10
+  TEST_DONE_TIMEOUT: 60
 
 jobs:
   test-on-linux:
