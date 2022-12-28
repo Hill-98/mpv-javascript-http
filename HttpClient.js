@@ -45,7 +45,7 @@ var maybe_string = function maybe_string(str) {
  * @param {...string} args
  * @returns {SubprocessResult}
  */
-var subprocess = function subprocess(args) {
+var subprocess = function subprocess() {
     return mp.command_native({
         name: 'subprocess',
         args: arguments2array(arguments),
@@ -60,7 +60,7 @@ var subprocess = function subprocess(args) {
  */
 var detect_os = function detect_os() {
     var home = utils.getenv('USERPROFILE');
-    if (typeof home === 'string' && /([A-Z]:)|(\\\\)/i.test(home)) {
+    if (typeof home === 'string' && /^[A-Z]:|^\\\\/i.test(home)) {
         return 'windows';
     }
     var process = subprocess('uname', '-s');
